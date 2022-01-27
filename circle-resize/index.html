@@ -1,0 +1,27 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>circle-resize</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="scripts.js"></script>
+  </head>
+  <body>
+    <main>
+      <svg
+        onpointermove="changeRadius(event, 'circle')"
+        width="100vw"
+        height="100vh"
+      >
+        <circle
+          id="circle"
+          cx="50%"
+          cy="50%"
+          r="160"
+          fill="ivory"
+          stroke="orange"
+        />
+      </svg>
+    </main>
+  </body>
+</html>
