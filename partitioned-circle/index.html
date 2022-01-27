@@ -1,0 +1,221 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>partioned-circle</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="scripts.js"></script>
+  </head>
+  <body>
+    <main style="margin-inline: auto">
+      <svg width="360" height="360">
+        <g
+          id="main-group"
+          transform="translate(180, 180)"
+          onpointerup="{
+            if (toggled) {
+              let x = event.clientX;
+              let y = event.clientY;
+              let msg = `point: ${x} ${y}`;
+              const mainGroup = document.getElementById('main-group');
+              alert(document.elementFromPoint(x, y).id);
+              up();
+            }
+          }"
+        >
+          <circle
+            id="circle"
+            fill="#AAA4"
+            style="box-shadow: inset 0 -3em 3em rgba(0, 0, 0, 0.1)"
+          />
+          <g id="parts" />
+          <g id="separators" />
+          <g onpointerdown="down()" id="select">
+            <circle r="30" fill="#888" stroke="#666" stroke-width="5" />
+            <g transform="translate(-18.5, -18.5) scale(1.5)">
+              <path
+                fill="#DDD"
+                d="M 12,4 
+               A 4,4 0 0,1 16,8
+               A 4,4 0 0,1 12,12
+               A 4,4 0 0,1 8,8
+               A 4,4 0 0,1 12,4
+               M 12,14 C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
+              />
+            </g>
+          </g>
+        </g>
+      </svg>
+    </main>
+    <script>
+      const center = { x: 0, y: 0 };
+      const radius = 155;
+      const minRadius = 40;
+      const strokeWidth = 10;
+      const svgStandard = "http://www.w3.org/2000/svg";
+      let toggled = false;
+      const parts = [
+        {
+          radius: radius,
+          startAngle: -50,
+          endAngle: 90,
+          fill: "#44668855",
+          stroke: "#446688",
+          text: "#335577",
+          members: [0.1, 0.4, 0.6, 0.8, 0.3, 0.6, 0.9],
+        },
+        {
+          radius: radius,
+          startAngle: 90,
+          endAngle: 160,
+          fill: "#88114455",
+          stroke: "#881144",
+          text: "#770033",
+          members: [0.5, 0.6],
+        },
+        {
+          radius: radius,
+          startAngle: 160,
+          endAngle: 200,
+          fill: "#99332255",
+          stroke: "#993322",
+          text: "#882211",
+          members: [0.8, 0.5, 0.75],
+        },
+        {
+          radius: radius,
+          startAngle: 200,
+          endAngle: 270,
+          fill: "#AAAA8855",
+          stroke: "#AAAA88",
+          text: "#999977",
+          members: [0.9, 0.2, 0.15],
+        },
+        {
+          radius: radius,
+          startAngle: 270,
+          endAngle: 310,
+          fill: "#00AA0055",
+          stroke: "#00AA00",
+          text: "#009900",
+          members: [0.9, 0.35, 0.95],
+        },
+      ];
+
+      const up = () => (toggled = false);
+      const down = () => (toggled = true);
+
+      const partsGroup = document.getElementById("parts");
+      const separatorGroup = document.getElementById("separators");
+
+      document
+        .getElementById("circle")
+        .setAttribute("r", radius + strokeWidth / 2);
+
+      parts.forEach((part, id) => {
+        const group = document.createElementNS(svgStandard, "g");
+        group.setAttribute("id", id);
+        partsGroup.appendChild(group);
+
+        const stroke = document.createElementNS(svgStandard, "path");
+        const fill = document.createElementNS(svgStandard, "path");
+        const separator = document.createElementNS(svgStandard, "path");
+        const text = document.createElementNS(svgStandard, "text");
+
+        group.appendChild(text);
+        group.appendChild(fill);
+        group.appendChild(stroke);
+        separatorGroup.appendChild(separator);
+
+        stroke.setAttribute("id", `${id}-stroke`);
+        stroke.setAttribute("stroke", part.stroke);
+        stroke.setAttribute("fill", "none");
+        stroke.setAttribute("stroke-width", strokeWidth);
+
+        text.setAttribute("dy", -10);
+        text.setAttribute("fill", part.text);
+        text.setAttribute("font-size", "1.2em");
+        text.setAttribute("font-weight", "bold");
+        text.setAttribute("font-family", "Arial, Helvetica, sans-serif");
+        const textPath = document.createElementNS(svgStandard, "textPath");
+        textPath.setAttribute("href", `#${id}-stroke`);
+        textPath.setAttribute("side", "right");
+        textPath.setAttribute("startOffset", "50%");
+        textPath.setAttribute("text-anchor", "middle");
+        textPath.textContent = `${part.members.length}/${part.members.length}`;
+        text.appendChild(textPath);
+
+        fill.setAttribute("id", `${id}-fill`);
+        fill.setAttribute("fill", part.fill);
+
+        separator.setAttribute("id", `${id}-separator`);
+        separator.setAttribute("stroke", "white");
+        separator.setAttribute("stroke-width", 2);
+
+        stroke.setAttribute(
+          "d",
+          drawStroke(
+            center.x,
+            center.y,
+            part.radius,
+            part.startAngle,
+            part.endAngle
+          )
+        );
+        fill.setAttribute(
+          "d",
+          drawFill(
+            center.x,
+            center.y,
+            part.radius,
+            part.startAngle,
+            part.endAngle
+          )
+        );
+        separator.setAttribute(
+          "d",
+          drawSeparator(
+            center.x,
+            center.y,
+            part.radius + strokeWidth / 2,
+            part.startAngle
+          )
+        );
+
+        const body = document.getElementsByTagName("body")[0];
+
+        stroke.onpointermove = (event) => {
+          if (!toggled) {
+            onResize(
+              event,
+              body.clientWidth,
+              body.clientHeight,
+              minRadius,
+              radius,
+              part,
+              stroke,
+              fill,
+              textPath
+            );
+          }
+        };
+
+        fill.onpointermove = (event) => {
+          if (!toggled) {
+            onResize(
+              event,
+              body.clientWidth,
+              body.clientHeight,
+              minRadius,
+              radius,
+              part,
+              stroke,
+              fill,
+              textPath
+            );
+          }
+        };
+      });
+    </script>
+  </body>
+</html>
